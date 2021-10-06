@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Crypto Monitor
+
+  SAM Template for the Crypto Monitor application. This constructs all the infra!
+  Template reference can be found: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy.html
+
+Resources:
+  CryptoStateMachine:
+    Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
+    Properties:
+      DefinitionUri: statemachine/crypto_monitor.asl.json
+      DefinitionSubstitutions:
+        CryptoMonitorFunctionArn: !GetAtt CryptoCollectorFunction.Arn
+      Events:
+        Collection:
+          Type: Schedule # More info about Schedule Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-statemachine-schedule.html
+          Properties:
+            Description: Schedule to collect and transform data each minute
+            Enabled: False # This schedule is disabled by default to avoid incurring charges.
+            Schedule: "rate(1 minute)"
+      Policies: # Find out more about SAM policy templates: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
+        - LambdaInvokePolicy:
+            FunctionName: !Ref CryptoCollectorFunction
+
+  CryptoCollectorFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      CodeUri: functions/collector/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Timeout: 60
+      Architectures:
+        - x86_64
+      Policies:
+        - Statement:
+          - Sid: CryptoMonitorS3Policy
+            Effect: Allow
+            Action:
+              - "s3:GetObject*"
+              - "s3:GetBucket*"
+              - "s3:PutObject*"
+              - "s3:List*"
+            Resource:
+              - !Sub "${DataBucket.Arn}"
+              - !Sub "${DataBucket.Arn}/*"
+
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketName: crypto-monitor-data
+
+Outputs:
+  # CryptoStateMachineTradingSchedule is an implicit Schedule event rule created out of Events key under Serverless::StateMachine
+  # Find out more about other implicit resources you can reference within SAM
+  # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-generated-resources.html
+  CryptoStateMachineArn:
+    Description: "Crypto Montior State Machine ARN"
+    Value: !Ref CryptoStateMachine
+  CryptoStateMachineRoleArn:
+    Description: "IAM Role created for Crypto Monitor State Machine based on the specified SAM Policy Templates"
+    Value: !GetAtt CryptoStateMachineRole.Arn

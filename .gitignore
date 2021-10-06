@@ -1,0 +1,7 @@
+venv
+__pycache__
+event.json
+.aws-sam
+.pytest_cache
+.vscode
+data/*

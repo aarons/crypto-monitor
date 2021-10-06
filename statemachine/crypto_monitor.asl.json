@@ -1,0 +1,21 @@
+{
+    "Comment": "A state machine that that monitors crypto metrics.",
+    "StartAt": "Collect Crypto Data",
+    "States": {
+        "Collect Crypto Data": {
+            "Type": "Task",
+            "Resource": "${CryptoMonitorFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 15,
+                    "MaxAttempts": 1,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "End": true
+        }
+    }
+}
