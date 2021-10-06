@@ -4,4 +4,5 @@ event.json
 .aws-sam
 .pytest_cache
 .vscode
-data/*
+data/*.json
+data
