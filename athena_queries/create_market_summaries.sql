@@ -1,3 +1,6 @@
+-- This query can be used to create a queryable table in athena
+-- TODO: currently it's loading the first line of each json file, instead of all 9000 lines
+--       probably has to do with SERDE properties.
 CREATE EXTERNAL TABLE IF NOT EXISTS
     `market_summaries` (
         `price_last` double,

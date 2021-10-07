@@ -10,7 +10,6 @@ import requests
 #     output would match the api endpoint, for example:
 #       s3://crypto-monitor-data/ingest/markets/summaries.json
 #   - to scale collectors:
-#       - moderate: use timestamps on output files to improve multi threading
 #       - large (>3500 puts/second): switch to firehose or kafka instead of s3 files
 #       - extra large: consider fargate containers instead of lambda functions
 
@@ -52,6 +51,7 @@ def lambda_handler(event, context):
 
     # ok we're good, next to parse the results
     # and print allowance to logs (make sure we're not going to go broke)
+    # TODO: should switch to proper logger
     print(r.json()['allowance'])
     results = r.json()['result']
 

@@ -68,12 +68,12 @@ def lambda_handler(event, context):
             ContentType='application/json',
             Key=new_key,
             # s3 services like athena expect json objects on individual lines
-            # without surrounding the entire thing in brackets (the default)
+            # without surrounding the entire thing in brackets (the default json.dumps)
             # [
             #   { item 1 },
             #   { item 2}
             # ]
-            # Not sure if strip is the best way to do this, but it results in:
+            # Not sure if .strip is the best way to do this, but it works
             # { item 1 },
             # { item 2 }
             # and now aws glue and athena are happy
