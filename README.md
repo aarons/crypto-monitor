@@ -1,16 +1,41 @@
 # Severless Crypto Monitor App
 
-This app relies on aws lambda to provide a serverless environment and easy scaleability. At a high level, this project consists of three components:
+This app relies on aws serverless resources to provide easy scaleability without infrastructure management. At a high level, this project consists of three components:
 
 1. data collection
 1. data transformation
 1. web app / api layer
 
-Data collection uses a lambda function to call an API and write results to S3.
+Data collection uses aws lambda, it calls an API and write results to S3.
 
-Transformation also relies on lambda and pandas to determine metrics and structure data for use by the app.
+Transformation also relies on lambda and structures data for use by the app.
 
 The web app / api layer utilizes FastAPI with Mangum to run on ... you guessed it, lambda!
+
+## Key Project Files
+
+```shell
+├── athena_queries
+│   └── create_market_summaries.sql  # table for querying s3
+├── example_data
+│   ├── ingest.json  # example output of collector.py
+│   └── raw.json     # example output of transformer.py
+├── functions
+│   ├── collector
+│   │   └── collector.py   # collects data from an external source
+│   ├── transformer
+│   │   └── transformer.py # transforms collected data for analytics
+│   └── webserver
+│       └── main.py        # api endpoint for exploring data
+├── statemachine
+│   └── crypto_monitor.asl.json  # describes the overall workflow for amazon steps
+├── 0-build.sh   # shortcut for building the app
+├── 1-deploy.sh  # shortcut for deploying the app
+├── README.md    # this file
+├── project_requirements.md
+├── samconfig.toml # default config for aws sam
+└── template.yaml  # cloudformation template
+```
 
 ## Prerequisites for Development
 
