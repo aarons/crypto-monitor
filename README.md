@@ -1,6 +1,8 @@
 # Severless Crypto Monitor App
 
-This app relies on aws serverless resources to provide easy scaleability without infrastructure management. At a high level, this project consists of three components:
+This app is based on [these project requirements](project_requirements.md). It collects crypocurrency metrics, structures data for use in many applications, and provides a simple api endpoint.
+
+AWS serverless architecture is used to provide easy scaleability. At a high level, this project consists of three components:
 
 1. data collection
 1. data transformation
