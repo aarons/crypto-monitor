@@ -297,27 +297,34 @@ TODO: Obviously, this should be handled as an environment variable for the lambd
 
 ### Time Log
 
-1. 1st hour:
-    - development/architecture plan
-    - aws sam setup & testing
-    - cloudformation and stack familiarity
-1. 2nd and 3rd hour
-    - data collection
-        - api call python
-        - lambda handler
-        - iam profiles for aws services
-        - write to s3
-        - publish and test lambda
-        - s3 bucket setup
-        - cloudformation stack
-1. 4th and 5th hour
-    - data transformation
-    - athena data validation
-    - fastapi endpoint (super basic)
-    - api gateway setup via cloudformation
-1. 6+
-    - documentation
-    - summarizing how to scale
+1st hour:
+
+- development/architecture plan
+- aws sam setup & testing
+- cloudformation and stack familiarity
+
+2nd and 3rd hour
+
+- data collection
+  - api call python
+  - lambda handler
+  - iam profiles for aws services
+  - write to s3
+  - publish and test lambda
+  - s3 bucket setup
+  - cloudformation stack
+
+4th and 5th hour
+
+- data transformation
+- athena data validation
+- fastapi endpoint (super basic)
+- api gateway setup via cloudformation
+
+6+ hours
+
+- documentation
+- summarizing how to scale
 
 ### Notes & Additional Learning
 
