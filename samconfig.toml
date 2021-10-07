@@ -3,9 +3,10 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "crypto-monitor"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1pep0etf19war"
 s3_prefix = "crypto-monitor"
+resolve_s3 = true
 region = "us-west-2"
 confirm_changeset = true
+no_fail_on_empty_changeset = true
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
