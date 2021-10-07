@@ -181,9 +181,12 @@ If data ingest starts to occur from clients pushing data to montecarlo, then we 
 
 ## Data Transformer
 
-This has a simple goal of structuring data for use in downstream systems. It takes files ingested by the collector and flattens them, as well as adding a timestamp column to record when data arrived.
+This has a simple goal of structuring data for use in downstream systems. It takes files ingested by the collector and flattens them, adds a timestamp column of when data arrived, and writes out to `s3://crypto-monitor-data/raw/<timestamp>.json`.
 
-This follows the ELT pattern (extract load transform) - the extract/collection step is purposefully kept as simple as possible, to minimize chance of data loss. Only after data arrives do we check the schema and load it to the `raw/` folder for use by other services.
+The details and logs can also be found on the lambda function and state machine pages:
+
+- [the lambda function details](https://us-west-2.console.aws.amazon.com/lambda/home?region=us-west-2#/functions)
+- [the state machine logs](https://us-west-2.console.aws.amazon.com/states/home?region=us-west-2#/statemachines)
 
 To run this locally: `sam local invoke CryptoTransformer`
 
@@ -214,7 +217,14 @@ Scaling de-duplication involves:
 
 This is where people are able to view all the handy metrics in nice graphs. Or it would be if it was built out.
 
-The webserver is deployed and configured via api gateway, so it is possible to send traffic and test endpoints. You can find the endpoint by going to [API Gateway](https://us-west-2.console.aws.amazon.com/apigateway/main/apis?region=us-west-2) and navigating to `APIs > crypto monitor > stages > Prod`. The `invoke URL` can be clicked on, which will instantiate the lambda nad pass traffic to FastAPI.
+The basic webserver is deployed, so it is possible to send traffic and test endpoints. You can find the endpoint by going to [API Gateway](https://us-west-2.console.aws.amazon.com/apigateway/main/apis?region=us-west-2) and navigating to `APIs > crypto monitor > stages > Prod`. The `invoke URL` can be clicked on, which will instantiate the lambda and pass traffic to FastAPI.
+
+To run this locally:
+
+```shell
+pip install fastapi[all] uvicorn
+uvicorn main:app --reload --app-dir functions/webserver/
+```
 
 ### To Productionize the Webserver
 
