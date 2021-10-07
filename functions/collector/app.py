@@ -37,8 +37,12 @@ def lambda_handler(event, context):
     ------
         str: Containing path to the written object
     """
-
-    params = {'apikey': event['API_KEY']}
+    if 'API_KEY' in event:
+        params = {'apikey': event['API_KEY']}
+    else:
+        # see cryptowat.ch to setup an account and api key
+        print("making the API call without a key")
+        params = {}
 
     try:
         r = requests.get(URI, params=params)

@@ -1,8 +1,6 @@
 # Severless Crypto Monitor App
 
-This app relies on lambda to provide a serverless environment and easy scaleability.
-
-At a high level, this project consists of three components:
+This app relies on lambda to provide a serverless environment and easy scaleability. At a high level, this project consists of three components:
 
 1. data collection
 1. data transformation
@@ -17,36 +15,91 @@ This also relies on lambda functions and applies transformations to determine me
 Web App / API Layer
 This is fairly simple, and utilizes FastAPI with Mangum on lambda
 
-## Prerequisites for development
+## Prerequisites for Development
 
-This relies on `aws sam` to develop lambda functions locally. It allows for local instantiation of lambda functions, tests, and helps manage deployments. There is some configuration involved if you haven't used `sam` before.
+You will need three things at minimum:
+
+1. an aws account
+1. docker
+1. the aws `cli`
+1. the aws `sam` cli
+
+### 1. an aws account
+
+Probably don't need to walk you through this - but on the good news, the app can run full time without incurring any costs it's in current state. It stays well below the 'free' minimums.
+
+`sam` will utilize your aws account, ideally your user/iam profile will have admin privileges, but at minimum you need to be able to manage these services: cloudformation, cloudwatch, lambda, s3, event bridge, api gateway, and iam profiles.
+
+### 2. docker
+
+Here are [walkthroughs](https://docs.docker.com/engine/install/) of getting it setup if it's not already installed. The [`sam` installation pages](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) also have instructions for docker.
+
+### 3. the aws `cli`
+
+This is used to setup your credentials, which sam will utilize. Instructions for installing this [can be found here](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-getting-started-set-up-credentials.html).
+
+You must run `aws configure` to add your credentials in order for `sam` to work.
+
+### 3. the aws `sam` cli
+
+This allows for local instantiation of lambda functions, tests, and helps manage deployments. This page has instructions for [installing sam on different environments](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html). The Linux instructions are provided below:
+
+1. Download [the AWS SAM CLI zip file](https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip) to a directory of your choice.
+1. unzip installation files: `unzip aws-sam-cli-linux-x86_64.zip -d sam-installation`
+1. sudo ./sam-installation/install
+1. sam --version
+
+## Development Cycle
+
+Ok, prereqs out of the way (whew!) here's how to work with the application.
+
+### building and invoking functions
+
+The first step is getting a lambda-like environment running locally.
 
 ```shell
-sam build-image
+sam build -t template.yaml
 sam local start-lambda
-aws lambda invoke --function-name "HelloWorldFunction" --endpoint-url "http://127.0.0.1:3001" --no-verify-ssl out.txt --env-vars .env
-
 ```
 
-Maybe; sam package --output-template-file package.yaml --s3-bucket bucketname
+Ok, try out a function (hint, it will fail but we'll get to that):
 
-Deploying!
+```shell
+sam local invoke CryptoCollectorFunction
+```
 
-It's helpful to see this running in a production like environment to get the full impact. So... here's how to deploy the cloudformation stack. It's also straightforward to unwind.
+You should see an API call and then a failure writing to s3. Unfortunately the s3 bucket needs to be created for most of local development to work at the moment. TODO: add environment handling (dev, staging, prod) and add handling for local filesystem work.
+
+To get functions to complete you will need to deploy the app. On the upside, it's easy to delete the stack at the end, see the next section for details.
+
+### Deploying
+
+Deploying requires two commands:
 
 ```bash
 sam build -t template.yaml
 sam deploy --guided --config-file samconfig.toml
+```
+
+Here's what each command is doing:
+
+`sam build -t template.yaml` this compiles the app, using the cloudformation-like template in template.yaml. It's SAM specific templating language, but you can use cloudformation yaml as well. See [these docs](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy.html) for more info. This step is required if the template or functions have been modified.
+
+`sam deploy --guided --config-file samconfig.toml` this will step through deploying the cloudformation stack to AWS. It will ask for confirmation before creating any resources. It utilizes `samconfig.toml` for the configuration details. This includes the app name 'crypto-monitor' which is how the stack will be identified in aws.
+
+Unwinding the deployment and deleting all resources requires three commands:
+
+```shell
+aws s3 rm s3://cyrpto-watch-data --recursive --dryrun
+aws s3 rm s3://aws-sam-cli-managed-default-samclisourcebucket-<id> --recursive --dryrun
 aws cloudformation delete-stack --stack-name crypto-monitor
 ```
 
-We'll unpack what each command is doing:
+`aws s3 rm s3://<...>` the s3 buckets must be empty in order for cloudformation to delete the buckets. You will need to remove the `--dryrun` flag for the commands to acutally run. Unfortunately `sam` adds a unique id to the source code bucket, so you will need to check to see the full name.
 
-`sam build -t template.yaml` this compiles the app, using the cloudformation-like template in template.yaml. It's SAM specific templating language, but you can use cloudformation yaml as well. See these docs for more info. This step is required before doing any deployments if the template or functions have been modified.
+`aws cloudformation delete-stack --stack-name crypto-monitor` when all finished testing the app, this command will delete all the resources from aws. One caveat is s3 buckets: the buckets have to be empty before the stack will delete the bucket. These two commands should help:
 
-`sam deploy --guided --config-file samconfig.toml` this will step through deploying the cloudformation stack to AWS. It will ask for confirmation before creating any resources. It utilizes samconfig.toml as a set of defaults, although since it's a guided process it will ask if you want to change any of those values (it's sensitive, so changes introduced here often fail). One caveat - the s3_bucket seems to get overwritten with SAMs preference, it appears to be early version software.
 
-`aws cloudformation delete-stack --stack-name crypto-monitor` when all finished testing the app, this command will delete all the resources from aws. One caveat is s3 buckets with contents, the buckets have to be empty before the stack will delete the bucket.
 
 
 ## Local Development
