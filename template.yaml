@@ -28,7 +28,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       CodeUri: functions/collector/
-      Handler: app.lambda_handler
+      Handler: collector.lambda_handler
       Runtime: python3.9
       Timeout: 60
       Architectures:
@@ -41,6 +41,29 @@ Resources:
               - "s3:GetObject*"
               - "s3:GetBucket*"
               - "s3:PutObject*"
+              - "s3:List*"
+            Resource:
+              - !Sub "${DataBucket.Arn}"
+              - !Sub "${DataBucket.Arn}/*"
+
+  CryptoTransformer:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/transformer/
+      Handler: transformer.lambda_handler
+      Runtime: python3.9
+      Timeout: 600
+      Architectures:
+        - x86_64
+      Policies:
+        - Statement:
+          - Sid: CryptoTransformS3Policy
+            Effect: Allow
+            Action:
+              - "s3:GetObject*"
+              - "s3:GetBucket*"
+              - "s3:PutObject*"
+              - "s3:DeleteObject*"
               - "s3:List*"
             Resource:
               - !Sub "${DataBucket.Arn}"

@@ -15,6 +15,21 @@
                     "BackoffRate": 1.5
                 }
             ],
+            "Next": "Transform Crypto Data"
+        },
+        "Transform Crypto Data": {
+            "Type": "Task",
+            "Resource": "{CryptoTransformArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 15,
+                    "MaxAttempts": 1,
+                    "BackoffRate": 1.5
+                }
+            ],
             "End": true
         }
     }

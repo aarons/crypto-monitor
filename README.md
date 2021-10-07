@@ -243,3 +243,11 @@ Or... for the web service
 - users browser requests async updates to charts (each minute)
 - invokes lambda function each time, with an endpoint that just sends the updated chart data
 
+## TODO LIST
+
+There are a lot of improvement areas
+
+TODO: Add unit tests
+TODO: Add integration tests
+TODO: Add type hinting everywhere
+TODO: add data validations to collector / transformer

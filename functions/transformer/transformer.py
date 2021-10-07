@@ -1,96 +1,84 @@
+import boto3
 from datetime import datetime
+from flatten_json import flatten
 import json
-import numpy
-import os
-import pandas as pd
-import time
 
-DATA_DIR = 'data/'
-METRICS_DIR = 'metrics/'
+# TODO: move this to a env parameter file
+AWS_BUCKET = 'crypto-monitor-data'
+INGEST = 'ingest/'
+RAW = 'raw/'
 
-# find earliest data file to ingest
-# this returns a filename
-def discover_data() -> str:
-    data_files = os.listdir(DATA_DIR)
-    if not data_files:
-        # no data to ingest or work with
-        raise Exception("no new data to ingest")
-    return numpy.sort(data_files)[0]
+def lambda_handler(event, context):
+    """
+    This transformer flattens ingested json content for use in a data warehouse.
 
-# find latest metrics file to annotate
-def discover_metrics() -> dict:
-    metric_files = os.listdir(METRICS_DIR)
-    if not metric_files:
-        return None
-    return numpy.sort(metric_files)[-1] # metrics filename
+    High level algorithm:
+    For up to 10 files in aws_bucket/ingest/:
+        - flatten
+        - add timestamp, market, and asset columns
+        - add to aws_bucket/raw/ (ok for use in datawarehouse)
+        - delete from ingest/
 
-def load_file(filename) -> dict:
-    with open(f"{DATA_DIR}{filename}", "r") as o:
-        data = json.load(o)
-    return data
+    Parameters
+    ----------
+    event: dict, required
+        Input event to the Lambda function
 
-def timestamp(filename) -> datetime:
-    # returns a timestamp based on a filename with an encoded epoc
-    epoc = int(filename.rstrip('.json'))
-    return datetime.fromtimestamp(epoc)
+    context: object, required
+        Lambda Context runtime methods and attributes
 
-def prep_dataframe(dataset, timestamp):
-    # convert dict to dataframe
-    df = pd.DataFrame.from_dict(dataset, orient='index', columns=["value"])
+    Returns
+    ------
+        str: just says 'ok' cause it's pretty cool
+    """
+    # Get list of object keys in ingest
+    # TODO: boto3 is instantiated with similar values across the app, consider subclassing with defaults preset
+    client = boto3.client('s3')
+    response = client.list_objects_v2(
+        Bucket=AWS_BUCKET,
+        MaxKeys=10,
+        Prefix=INGEST
+    )
 
-    # change the default index (dict keys, which are the names of the coins)
-    df.reset_index(inplace=True)
-    df.rename(columns={'index': 'coins'}, inplace=True)
-    df['updated_at'] = timestamp
+    for s3_obj in response['Contents']:
+        print(f"working on {s3_obj['Key']}")
+        stream = client.get_object(Bucket=AWS_BUCKET, Key=s3_obj['Key'])
+        file_content = stream['Body'].read().decode('utf-8')
+        json_content = json.loads(file_content)
 
-    # filter for coins traded on the binance market
-    # about 307 coins that are mapped to usd
-    df = df[df.coins.str.startswith('market:binance') & df.coins.str.endswith('usd')]
+        # flatten the json object to make it easy to work with in a data warehouse
+        # each object looks like:
+        # 'uniswap-v2:zutweth': {'price_last': 0.1980423702789855, 'price_high': 0.1980423702789855, 'price_low': 0.1980423702789855, 'price_change_percentage': 0, 'price_change_absolute': 0, 'volume': 4.500000000000001, 'volumeQuote': 0.891190666255435}
 
-    # the 'coins' string encodes several data points
-    # it looks like: market:binance-us:aaveusd
-    # these next lines split the string into the three components
-    # and then merges the new columns back to the original dataframe
-    components = df.coins.str.split(pat=':', expand=True).rename(columns={0: 'market', 1: 'exchange', 2: 'coin'})
-    df = df.merge(components, how='left', left_index=True, right_index=True)
+        flattened = []
+        # TODO: making a lot of assumptions about the quality of the data, need to add validations
+        for key in json_content.keys():
+            market, asset = str.split(key, ':')
+            contents = flatten(json_content[key])
+            contents['market'] = market
+            contents['asset'] = asset
+            # TODO: should include timezone information
+            contents['created_at'] = s3_obj['LastModified'].strftime("%Y-%m-%d %H:%M:%S")
+            flattened.append(contents)
 
-    # The dataset now looks like:
-    #                     coins     value            updated_at  market    exchange      coin
-    # market:binance-us:aaveusd  307.7500   2021-10-03 17:24:17  market  binance-us   aaveusd
-    #  market:binance-us:adausd    2.2437   2021-10-03 17:24:17  market  binance-us    adausd
+        new_key = s3_obj['Key'].replace(INGEST, RAW)
+        # TODO: should validate that the key name meets expectations
+        client.put_object(
+            Bucket=AWS_BUCKET,
+            ContentType='application/json',
+            Key=new_key,
+            Body=json.dumps(flattened, ensure_ascii=False),
+            )
+        print(f"wrote {AWS_BUCKET}/{new_key}")
 
-    # for now we aren't tracking markets & exchanges,
-    # next step is to select only needed columns and drop any duplicate rows
-    # the dataset is sorted by the original keys, so keeping the first dupe
-    # should be a consistent mapping.
-    # The market and exchange should be kept in production to differentiate correctly
-    df = df[['updated_at', 'coin', 'value']].drop_duplicates(subset='coin', keep='first')
-    return df
-
-def transform_dataframe(prepped, metrics):
-    df = metrics.append(prepped)
-    # In addition, the application will present the selected metric's "rank".
-    # The "rank" of the metric helps the user understand how the metric is changing relative to other similar metrics,
-    # as measured by the standard deviation of the metric over the last 24 hours.
-    # For example in the crypto data source, if the standard deviations of the volume
-    #   of BNT/BTC, GOLD/BTC and CBC/ETH were 100, 200 and 300 respectively,
-    #   then rank(CBC/ETH)=1/3, rank(GOLD/BTC)=2/3 and rank(BNT/BTC)=3/3.
-
-if __name__ == 'main':
-    try:
-        data_filename = discover_data()
-    except:
-        print("No data to ingest")
-        exit
-    raw_data = load_file(data_filename)
-    prepped = prep_dataframe(raw_data, timestamp(data_filename))
-
-    metrics_filename = discover_metrics()
-    if not metrics_filename:
-        metrics = pd.DataFrame(None, None, columns=['updated_at','coin','value'])
-    else:
-        metrics = load_file(metrics_filename)
-
-    df = transform_dataframe(prepped, metrics)
-    write_metrics(df)
+        # TODO: DRY up use of client/Bucket references, instantiate a bucket object
+        r = client.delete_object(
+            Bucket=AWS_BUCKET,
+            Key=s3_obj['Key']
+        )
+        if r['DeleteMarker']:
+            print(f"deleted {AWS_BUCKET}/{s3_obj['Key']}")
+        else:
+            raise Exception(f"error deleting {AWS_BUCKET}/{s3_obj['Key']}")
+    return "ok"
 

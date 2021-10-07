@@ -15,7 +15,7 @@ import requests
 #       - extra large: consider fargate containers instead of lambda functions
 
 URI = 'https://api.cryptowat.ch/markets/summaries'
-AWS_BUCKET_NAME = 'crypto-monitor-data'
+AWS_BUCKET = 'crypto-monitor-data'
 
 def lambda_handler(event, context):
     """
@@ -60,7 +60,7 @@ def lambda_handler(event, context):
 
     filename = f"{round(datetime.now().timestamp())}.json"
     s3 = boto3.resource('s3')
-    bucket = s3.Bucket(AWS_BUCKET_NAME)
+    bucket = s3.Bucket(AWS_BUCKET)
     s3_key = f"ingest/{filename}"
     bucket.put_object(
         ContentType='application/json',
