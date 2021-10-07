@@ -11,4 +11,4 @@ async def root():
 async def get_users():
     return {"message": "Get Users!"}
 
-handler = Mangum(app)
+lambdahandler = Mangum(app)

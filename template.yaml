@@ -46,6 +46,27 @@ Resources:
               - !Sub "${DataBucket.Arn}"
               - !Sub "${DataBucket.Arn}/*"
 
+  CryptoWebserver:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/webserver/
+      Handler: main.lambda_handler
+      Runtime: python3.9
+      Timeout: 180
+      Architectures:
+        - x86_64
+      Policies:
+        - Statement:
+          - Sid: CryptoMonitorS3Policy
+            Effect: Allow
+            Action:
+              - "s3:GetObject*"
+              - "s3:GetBucket*"
+              - "s3:List*"
+            Resource:
+              - !Sub "${DataBucket.Arn}"
+              - !Sub "${DataBucket.Arn}/*"
+
   DataBucket:
     Type: AWS::S3::Bucket
     Properties:
