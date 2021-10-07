@@ -67,7 +67,17 @@ def lambda_handler(event, context):
             Bucket=AWS_BUCKET,
             ContentType='application/json',
             Key=new_key,
-            Body=json.dumps(flattened, ensure_ascii=False),
+            # s3 services like athena expect json objects on individual lines
+            # without surrounding the entire thing in brackets (the default)
+            # [
+            #   { item 1 },
+            #   { item 2}
+            # ]
+            # Not sure if strip is the best way to do this, but it results in:
+            # { item 1 },
+            # { item 2 }
+            # and now aws glue and athena are happy
+            Body=json.dumps(flattened, ensure_ascii=False).strip("[]"),
             )
         print(f"wrote {AWS_BUCKET}/{new_key}")
 

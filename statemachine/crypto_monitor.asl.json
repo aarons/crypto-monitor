@@ -19,7 +19,7 @@
         },
         "Transform Crypto Data": {
             "Type": "Task",
-            "Resource": "{CryptoTransformArn}",
+            "Resource": "${CryptoTransformerArn}",
             "Retry": [
                 {
                     "ErrorEquals": [

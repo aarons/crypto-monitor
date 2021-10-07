@@ -13,6 +13,7 @@ Resources:
       DefinitionUri: statemachine/crypto_monitor.asl.json
       DefinitionSubstitutions:
         CryptoMonitorFunctionArn: !GetAtt CryptoCollectorFunction.Arn
+        CryptoTransformerArn: !GetAtt CryptoTransformer.Arn
       Events:
         Collection:
           Type: Schedule # More info about Schedule Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-statemachine-schedule.html
@@ -23,6 +24,10 @@ Resources:
       Policies: # Find out more about SAM policy templates: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
         - LambdaInvokePolicy:
             FunctionName: !Ref CryptoCollectorFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref CryptoTransformer
+        - LambdaInvokePolicy:
+            FunctionName: !Ref CryptoWebserver
 
   CryptoCollectorFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
@@ -57,7 +62,7 @@ Resources:
         - x86_64
       Policies:
         - Statement:
-          - Sid: CryptoTransformS3Policy
+          - Sid: CryptoTransformerS3Policy
             Effect: Allow
             Action:
               - "s3:GetObject*"
@@ -88,7 +93,7 @@ Resources:
         - x86_64
       Policies:
         - Statement:
-          - Sid: CryptoMonitorS3Policy
+          - Sid: CryptoWebserverS3Policy
             Effect: Allow
             Action:
               - "s3:GetObject*"
