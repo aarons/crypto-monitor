@@ -1,38 +1,35 @@
 # Severless Crypto Monitor App
 
-This app relies on lambda to provide a serverless environment and easy scaleability. At a high level, this project consists of three components:
+This app relies on aws lambda to provide a serverless environment and easy scaleability. At a high level, this project consists of three components:
 
 1. data collection
 1. data transformation
 1. web app / api layer
 
-Data Collection
-This uses lambda functions to call an API and write results to S3.
+Data collection uses a lambda function to call an API and write results to S3.
 
-Transformation
-This also relies on lambda functions and applies transformations to determine metrics and structure data for use by the app.
+Transformation also relies on lambda and pandas to determine metrics and structure data for use by the app.
 
-Web App / API Layer
-This is fairly simple, and utilizes FastAPI with Mangum on lambda
+The web app / api layer utilizes FastAPI with Mangum to run on ... you guessed it, lambda!
 
 ## Prerequisites for Development
 
-You will need three things at minimum:
+You will need:
 
 1. an aws account
 1. docker
-1. the aws `cli`
-1. the aws `sam` cli
+1. the `aws cli`
+1. the `aws sam cli`
 
 ### 1. an aws account
 
-Probably don't need to walk you through this - but on the good news, the app can run full time without incurring any costs it's in current state. It stays well below the 'free' minimums.
+Probably don't need to walk you through this - but on the good news, the app can run full time without incurring any costs it's in current state. After deployment it is paused, and after enabled it stays below the 'free' minimums.
 
-`sam` will utilize your aws account, ideally your user/iam profile will have admin privileges, but at minimum you need to be able to manage these services: cloudformation, cloudwatch, lambda, s3, event bridge, api gateway, and iam profiles.
+`sam` will utilize your aws account, ideally your user/iam profile will have admin privileges, but at minimum you need to be able to manage these services: cloudformation, cloudwatch, lambda, s3, event bridge, api gateway, steps/state machines, and iam profiles.
 
 ### 2. docker
 
-Here are [walkthroughs](https://docs.docker.com/engine/install/) of getting it setup if it's not already installed. The [`sam` installation pages](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) also have instructions for docker.
+Here are [walkthroughs](https://docs.docker.com/engine/install/) of getting it setup if it's not already installed. The [sam installation pages](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) also have instructions for docker.
 
 ### 3. the aws `cli`
 
@@ -46,8 +43,8 @@ This allows for local instantiation of lambda functions, tests, and helps manage
 
 1. Download [the AWS SAM CLI zip file](https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip) to a directory of your choice.
 1. unzip installation files: `unzip aws-sam-cli-linux-x86_64.zip -d sam-installation`
-1. sudo ./sam-installation/install
-1. sam --version
+1. `sudo ./sam-installation/install`
+1. `sam --version`
 
 ## Development Cycle
 
@@ -55,11 +52,10 @@ Ok, prereqs out of the way (whew!) here's how to work with the application.
 
 ### building and invoking functions
 
-The first step is getting a lambda-like environment running locally.
+The first step is to get a lambda-like environment setup.
 
 ```shell
 sam build -t template.yaml
-sam local start-lambda
 ```
 
 Ok, try out a function (hint, it will fail but we'll get to that):
@@ -68,9 +64,9 @@ Ok, try out a function (hint, it will fail but we'll get to that):
 sam local invoke CryptoCollectorFunction
 ```
 
-You should see an API call and then a failure writing to s3. Unfortunately the s3 bucket needs to be created for most of local development to work at the moment. TODO: add environment handling (dev, staging, prod) and add handling for local filesystem work.
+You should see an API call and then a failure writing to s3. Unfortunately the s3 bucket needs to be created for most of local development to work at the moment. To productionize this, we would need to add environment handling (dev, staging, prod) and add handling for local filesystem work.
 
-To get functions to complete you will need to deploy the app. On the upside, it's easy to delete the stack at the end, see the next section for details.
+To get functions to complete you will need to deploy the app (covered in the next section). On the upside, it's easy to delete the stack at the end.
 
 ### Deploying
 
@@ -83,9 +79,9 @@ sam deploy --guided --config-file samconfig.toml
 
 Here's what each command is doing:
 
-`sam build -t template.yaml` this compiles the app, using the cloudformation-like template in template.yaml. It's SAM specific templating language, but you can use cloudformation yaml as well. See [these docs](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy.html) for more info. This step is required if the template or functions have been modified.
+`sam build -t template.yaml` this compiles the app, using the cloudformation-like template in [template.yaml](template.yaml). It's SAM specific templating language, but you can use cloudformation yaml as well. See [these docs](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy.html) for more info. This step is required if the template or functions have been modified.
 
-`sam deploy --guided --config-file samconfig.toml` this will step through deploying the cloudformation stack to AWS. It will ask for confirmation before creating any resources. It utilizes `samconfig.toml` for the configuration details. This includes the app name 'crypto-monitor' which is how the stack will be identified in aws.
+`sam deploy --guided --config-file samconfig.toml` this will step through deploying the cloudformation stack to AWS. It will ask for confirmation before creating any resources. It utilizes `samconfig.toml` for the configuration. The stack name 'crypto-monitor' is how it will show up in aws.
 
 Unwinding the deployment and deleting all resources requires three commands:
 
@@ -95,58 +91,58 @@ aws s3 rm s3://aws-sam-cli-managed-default-samclisourcebucket-<id> --recursive -
 aws cloudformation delete-stack --stack-name crypto-monitor
 ```
 
+Here's what these commands are doing:
+
 `aws s3 rm s3://<...>` the s3 buckets must be empty in order for cloudformation to delete the buckets. You will need to remove the `--dryrun` flag for the commands to acutally run. Unfortunately `sam` adds a unique id to the source code bucket, so you will need to check to see the full name.
 
 `aws cloudformation delete-stack --stack-name crypto-monitor` when all finished testing the app, this command will delete all the resources from aws. One caveat is s3 buckets: the buckets have to be empty before the stack will delete the bucket. These two commands should help:
 
+## Working with python dependencies
 
+Sam will handle deploying package dependencies, but there are a few steps involved. Here's an example of how to install and work with the `requests` python library.
 
+For local development, virtualenv is helpful:
 
-## Local Development
-
-Sam will handle package dependencies, but there are a few steps:
+```shell
+virtualenv python3.9 venv
 pip install requests
+```
+
+To make this package available to the `collector` lambda function:
+
+```shell
 pip freeze > functions/collector/requirements.txt
 sam build -t template.yaml
-sam local invoke CryptoCollectorFunction --event env.json
-Create event.json with api keys
+```
 
-So first is git checkout, then sam built -t template, then might need the guided deploy to create an s3 target bucket for local validation.
+Now package imports should work when you invoke the function locally, or after deploying the application.
 
-https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-cli-command-reference-sam-local-start-lambda.html
-sam local start-lambda
-aws lambda invoke --function-name "HelloWorldFunction" --endpoint-url "http://127.0.0.1:3001" --no-verify-ssl out.txt
+## Turning on the state machine
 
-## Deployment
-
-Turning on the state machine:
-https://us-west-2.console.aws.amazon.com/events/home?region=us-west-2#/rules
-
+By default the state machine is disabled to prevent the lambda functions from running. Once enabled, it will collect and transform data every minute. To start the process, you can enable the state machine:
+https://us-west-2.console.aws.amazon.com/events/home?region=us-west-2#/rules (substitute the region for where the app was deployed).
 
 ## Time Log
 
 1. 1st hour:
     - development/architecture plan
     - aws sam setup & testing
-    - readme doc
-1. 2nd hour
+1. 2nd and 3rd hour
     - data collection
         - api call python
         - lambda handler
         - iam profiles for aws services
         - write to s3
         - publish and test lambda
-        - s3 bucket
+        - s3 bucket setup
         - cloudformation stack
-1. 3rd hour
-    - documentation and tests
-1. 4th hour
-    - goal: fastapi endpoints
-    - goal: api gateway setup
-1. 5th hour
-    - goal: wrap up documentation
-    - goal: summarize how to scale
-
+1. 4th and 5th hour
+    - data transformation (simple)
+    - fastapi endpoint (basic)
+    - tests (needs moar)
+1. 6+
+    - documentation
+    - summarizing how to scale
 
 ## Notes & Additional Learning
 
@@ -154,61 +150,9 @@ This repo is based on the excellent aws lambda guide:
 https://github.com/awsdocs/aws-lambda-developer-guide/tree/main/sample-apps/blank-python
 
 And implementation was inspired by these tutorials:
-
 - [fastapi with lambda and api gateway](https://www.deadbear.io/simple-serverless-fastapi-with-aws-lambda/)
 - [stock app with steps & lambda](https://docs.aws.amazon.com/step-functions/latest/dg/sample-lambda-orchestration.html)
 - [etl with lambda](https://aws.amazon.com/blogs/industries/etl-ingest-architecture-for-asset-management-based-on-aws-lambda/)
-
-
-# Todo
-
-This is the development plan, it starts with a simple local app that could be deployed via docker to an ec2 instance. After v0 it switches to serverless architecture for better scaling.
-
-## Todo v0 (local only / docker)
-
-[x] data collection -> data/ingest_timesamp.json
-[x] data transformation
-    [x] read next ingest
-    [ ] read last 24 hour metrics
-    [ ] compute metrics
-    [ ] write 24 hour metrics
-    [ ] delete ingest
-[ ] graphql strawberry
-    [ ] setup endpoints
-    [ ] setup data model
-    [ ] validate queries
-
-## Todo v1 (steps / lambda)
-
-## Time Tracker
-
-## Time Log
-
-1. 1st hour:
-    - documentation
-        - project requirements
-        - development/architecture plan
-        - todo list / time log
-        - readme
-    - git repo setup
-    - data collection (very basic, signed up for account as well)
-1. 2nd hour
-    - data transformer
-        - get filelist
-        - load earliest
-        - load metrics
-        - calculate
-        - write metrics
-        - delete earliest file
-    - setup .env file and config
-1. 3rd hour
-1. 4th hour
-    - goal: front end setup
-    - goal: fastapi endpoints
-    - goal: api gateway setup
-1. 5th hour
-    - goal: wrap up documentation
-    - goal: summarize how to scale
 
 
 ## Todo v1 (lambda/steps simple version)
@@ -273,7 +217,6 @@ This is the development plan, it starts with a simple local app that could be de
     [ ] add selections for other charts
     [ ] figure out streaming results to webclient
     [ ] deploy: share with data collection/transforms
-
 
 developer happiness
     local environment: docker

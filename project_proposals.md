@@ -108,17 +108,3 @@ I'm less familiar with how to actually ping the user when we have an SNS notific
 
 It would be fun to sketch out how this would be done with *n* alerts and *n* users - providing users a way to alert on any condition they can query. Presumably this has been architected before, so I'd research approaches published online.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
