@@ -81,3 +81,8 @@ And implementation was inspired by these tutorials:
 - [fastapi with lambda and api gateway](https://www.deadbear.io/simple-serverless-fastapi-with-aws-lambda/)
 - [stock app with steps & lambda](https://docs.aws.amazon.com/step-functions/latest/dg/sample-lambda-orchestration.html)
 - [etl with lambda](https://aws.amazon.com/blogs/industries/etl-ingest-architecture-for-asset-management-based-on-aws-lambda/)
+
+
+Some other references
+https://iwpnd.pw/articles/2020-01/deploy-fastapi-to-aws-lambda
+https://github.com/KurtKline/fastapi-postgres-aws-lambda/tree/master/app

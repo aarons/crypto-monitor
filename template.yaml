@@ -53,6 +53,14 @@ Resources:
       Handler: main.lambda_handler
       Runtime: python3.9
       Timeout: 180
+      Events:
+        ApiEvent:
+          Properties:
+            RestApiId:
+              Ref: CryptoApiGateway
+            Path: /
+            Method: GET
+          Type: Api
       Architectures:
         - x86_64
       Policies:
@@ -66,6 +74,14 @@ Resources:
             Resource:
               - !Sub "${DataBucket.Arn}"
               - !Sub "${DataBucket.Arn}/*"
+
+  CryptoApiGateway:
+        Type: AWS::Serverless::Api
+        Auth:
+          ApiKeyRequired: false
+        Properties:
+          StageName: Prod
+          OpenApiVersion: '3.0.0'
 
   DataBucket:
     Type: AWS::S3::Bucket

@@ -7,8 +7,4 @@ app = FastAPI()
 async def root():
   return {"message": "Hello World"}
 
-@app.get("/users")
-async def get_users():
-    return {"message": "Get Users!"}
-
-lambdahandler = Mangum(app)
+lambda_handler = Mangum(app)
