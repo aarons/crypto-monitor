@@ -38,17 +38,17 @@ AWS serverless architecture is used to provide easy scaleability. At a high leve
 You will need:
 
 1. docker
-1. `aws cli`
-1. `aws sam cli`
+1. `aws` cli
+1. aws `sam` cli
 1. this repo and python 3.9
 
 ### 1. docker
 
 Here are [walkthroughs](https://docs.docker.com/engine/install/) of getting it setup if it's not already installed. The [sam installation pages](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) also have instructions for docker.
 
-### 2. the aws `cli`
+### 2. the `aws` cli
 
-This is used to setup your credentials, which sam will utilize. Instructions for installing this [can be found here](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-getting-started-set-up-credentials.html).
+This is used to setup your credentials which aws `sam` will utilize. Instructions for installing this [can be found here](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-getting-started-set-up-credentials.html).
 
 You must run `aws configure` to add your credentials in order for `sam` to work.
 
