@@ -44,22 +44,34 @@ You will need:
 
 ### 1. docker
 
-Here are [walkthroughs](https://docs.docker.com/engine/install/) of getting it setup if it's not already installed. The [sam installation pages](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) also have instructions for docker.
+Here are [walkthroughs](https://docs.docker.com/engine/install/) of getting it setup if it's not already installed. 
 
 ### 2. the `aws` cli
 
-This is used to setup your credentials which aws `sam` will utilize. Instructions for installing this [can be found here](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-getting-started-set-up-credentials.html).
+The `aws` cli is used to manage credentials for aws `sam`. Instructions for installing `aws` cli [can be found here](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html).
 
-You must run `aws configure` to add your credentials in order for `sam` to work.
+You must run `aws configure` to add your credentials after installing.
 
 ### 3. the aws `sam` cli
 
-This allows for local instantiation of lambda functions, tests, and helps manage deployments. This page has instructions for [installing sam on different environments](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html). The Linux instructions are provided below:
+This allows for local instantiation of lambda functions, tests, and helps manage deployments. This page has instructions for [installing sam on different environments](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html). 
 
-1. Download [the AWS SAM CLI zip file](https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip) to a directory of your choice.
-1. unzip installation files: `unzip aws-sam-cli-linux-x86_64.zip -d sam-installation`
-1. `sudo ./sam-installation/install`
-1. `sam --version`
+For Ubuntu:
+
+```shell
+curl https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip --location -o aws-sam-cli-linux-x86_64.zip
+unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
+sudo ./sam-installation/install
+sam --version
+```
+
+For OSX (requires [homebrew](https://docs.brew.sh/Installation)):
+
+```shell
+brew tap aws/tap
+brew install aws-sam-cli
+sam --version
+```
 
 ### 1. this repo and python 3.9
 
@@ -87,8 +99,6 @@ virtualenv -p python3.9 venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-
-Note that OSX may require a .(dot): `source ./venv/bin/activate`
 
 ## Development Cycle
 
@@ -137,7 +147,7 @@ https://us-west-2.console.aws.amazon.com/events/home?region=us-west-2#/rules (su
 Unwinding the deployment and deleting all resources requires three commands:
 
 ```shell
-aws s3 rm s3://cyrpto-watch-data --recursive --dryrun
+aws s3 rm s3://crypto-monitor-data --recursive --dryrun
 aws s3 rm s3://aws-sam-cli-managed-default-samclisourcebucket-<id> --recursive --dryrun
 aws cloudformation delete-stack --stack-name crypto-monitor
 ```

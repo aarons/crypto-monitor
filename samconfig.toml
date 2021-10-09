@@ -2,8 +2,8 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "crypto-monitor"
-s3_prefix = "crypto-monitor"
+stack_name = "crypto-monitor-two"
+s3_prefix = "crypto-monitor-two"
 resolve_s3 = true
 region = "us-west-2"
 confirm_changeset = true
