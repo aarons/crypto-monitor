@@ -26,10 +26,11 @@ AWS serverless architecture is used to provide easy scaleability. At a high leve
 ├── statemachine
 │   └── crypto_monitor.asl.json  # the overall workflow for amazon steps
 ├── 1-deploy.sh # helpful deployment shell script
-├── README.md
-├── project_requirements.md
-├── samconfig.toml # default config for aws sam
-└── template.yaml  # cloudformation template
+├── README.md   # this doc
+├── project_requirements.md # a brief of the project deliverables
+├── requirements.txt # python libraries needed
+├── samconfig.toml   # default config for aws sam
+└── template.yaml    # cloudformation template
 ```
 
 ## Prerequisites for Development
@@ -37,8 +38,9 @@ AWS serverless architecture is used to provide easy scaleability. At a high leve
 You will need:
 
 1. docker
-1. the `aws cli`
-1. the `aws sam cli`
+1. `aws cli`
+1. `aws sam cli`
+1. this repo and python 3.9
 
 ### 1. docker
 
@@ -58,6 +60,35 @@ This allows for local instantiation of lambda functions, tests, and helps manage
 1. unzip installation files: `unzip aws-sam-cli-linux-x86_64.zip -d sam-installation`
 1. `sudo ./sam-installation/install`
 1. `sam --version`
+
+### 1. this repo and python 3.9
+
+This repo was developed using python 3.9 - other python3 versions should work, but that would be the safest to setup. It's also helpful to have a virtual environment to safely install packages. I like to use `virtualenv` but other environment handlers should also work.
+
+Python 3.9 and virtualenv for Ubuntu:
+
+```shell
+sudo apt install python3.9
+sudo apt install virtualenv
+```
+
+For OSX - installation instructions [for python3](https://docs.python-guide.org/starting/install3/osx/), and then for virtualenv it's:
+
+```shell
+python3 -m pip install --user virtualenv
+```
+
+After cloning this repo install the required packages:
+
+```shell
+git clone git@github.com:aarons/serverless-crypto-monitor.git
+cd serverless-crypto-monitor
+virtualenv -p python3.9 venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Note that OSX may require a .(dot): `source ./venv/bin/activate`
 
 ## Development Cycle
 
@@ -303,7 +334,7 @@ TODO: Obviously, this should be handled as an environment variable for the lambd
 - aws sam setup & testing
 - cloudformation and stack familiarity
 
-2nd and 3rd hour
+2nd and 3rd hour:
 
 - data collection
   - api call python
@@ -314,14 +345,14 @@ TODO: Obviously, this should be handled as an environment variable for the lambd
   - s3 bucket setup
   - cloudformation stack
 
-4th and 5th hour
+4th and 5th hour:
 
 - data transformation
 - athena data validation
 - fastapi endpoint (super basic)
 - api gateway setup via cloudformation
 
-6+ hours
+6+ hours:
 
 - documentation
 - summarizing how to scale
