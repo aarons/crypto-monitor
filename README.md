@@ -118,7 +118,7 @@ Ok, try out a function (hint, it will fail but we'll get to that):
 sam local invoke CryptoCollectorFunction
 ```
 
-You should see an API call and then a failure writing to s3. Unfortunately the s3 bucket needs to be created for local development to work at the moment. On the upside, it's easy to deploy the stack (creating the s3 bucket) and to delete the stack at the end.
+You should see an API call and a failure writing to s3. The s3 bucket needs to be created for local development to work at the moment. A cloudformation stack is used, which makes creating (and deleting) AWS resources simpler.
 
 ### Deploying
 
