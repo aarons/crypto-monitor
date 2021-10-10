@@ -158,22 +158,15 @@ Here's what these commands are doing:
 
 `aws cloudformation delete-stack --stack-name crypto-monitor` this command will delete all the resources from aws.
 
-## Working with lambda and python dependencies
+## Working with lambda and python packages
 
-Sam will need to build and deploy any packages imported in lambda functions. Sam will use the requirements.txt file in each functions/ subdirectory to know what to build.
+Lambda functions need their dependencies packaged and deployed alongside. Sam will use the requirements.txt file in each functions subdirectory to know what to build.
 
 Here's an example of how to install and work with the `requests` python library.
-
-For local development, virtualenv is helpful:
 
 ```shell
 virtualenv python3.9 venv
 pip install requests
-```
-
-To make this package available to the `collector` lambda function:
-
-```shell
 pip freeze > functions/collector/requirements.txt
 sam build -t template.yaml
 ```
@@ -205,6 +198,7 @@ Lots of things are needed to make this production ready:
 - payload is submitted/config driven
 - output key includes api endpoint (example: s3://.../market/summaries/output.json)
 - api_key is handled as an environment variable
+- monitoring and alerting when the function has errors (cloudwatch / pagerduty integration)
 
 ### To Scale the Collector
 
@@ -229,7 +223,9 @@ The details and logs can also be found on the lambda function and state machine 
 - [the lambda function details](https://us-west-2.console.aws.amazon.com/lambda/home?region=us-west-2#/functions)
 - [the state machine logs](https://us-west-2.console.aws.amazon.com/states/home?region=us-west-2#/statemachines)
 
-To run this locally: `sam local invoke CryptoTransformer`
+To run this locally: `sam local invoke CryptoTransformer` 
+
+It is helpful to invoke the `CryptoCollectorFunction` just before, so that there is data available to transform. 
 
 ### To Productionize the data transformer
 
@@ -241,12 +237,14 @@ To run this locally: `sam local invoke CryptoTransformer`
   - that transformed data set has the same number of rows
   - that written data is valid/json
 - consider triggering this function when new files are added to /ingest, instead of looking for files in ingest to process - this would prevent the transformer getting stuck on several invalid files/data (it would continually try them if the 'queue' filled up with bad data)
+- monitoring and alerting in case of failure
+- alert if files stay in the /ingest folder for too long
 
 ### To Scale the transformer
 
 Since this function is mostly responsible for flattening data the memory and cpu requirements stay pretty low. It can process a lot of ingest files at once very quickly, so remaining a lambda function (or group of lambdas for different ingest pipelines) should be sufficient for a long time.
 
-One *very* helpful function at this stage is to introduce de-duplication though, which becomes both memory and cpu intensive.
+One *very* helpful function at this stage is to introduce de-duplication which is both memory and cpu intensive.
 
 Scaling de-duplication involves:
 
@@ -263,7 +261,6 @@ The basic webserver is deployed, so it is possible to send traffic and test endp
 To run this locally:
 
 ```shell
-pip install fastapi[all] uvicorn
 uvicorn main:app --reload --app-dir functions/webserver/
 ```
 
