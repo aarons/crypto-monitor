@@ -5,4 +5,4 @@ event.json
 .pytest_cache
 .vscode
 out.yml
-
+.idea
